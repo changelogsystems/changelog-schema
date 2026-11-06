@@ -8,3 +8,4 @@ export * from './entries.mjs';
 export * from './exporter.mjs';
 export * from './importer.mjs';
 export * from './migrate.mjs';
+export * from './config-md.mjs';

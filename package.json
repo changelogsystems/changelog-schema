@@ -7,17 +7,40 @@
   "exports": {
     ".": "./src/index.mjs",
     "./ids": "./src/ids.mjs",
-    "./time": { "types": "./src/time.d.mts", "default": "./src/time.mjs" },
-    "./config": { "types": "./src/config.d.mts", "default": "./src/config.mjs" },
-    "./entries": { "types": "./src/entries.d.mts", "default": "./src/entries.mjs" },
-    "./exporter": { "types": "./src/exporter.d.mts", "default": "./src/exporter.mjs" },
+    "./time": {
+      "types": "./src/time.d.mts",
+      "default": "./src/time.mjs"
+    },
+    "./config": {
+      "types": "./src/config.d.mts",
+      "default": "./src/config.mjs"
+    },
+    "./config-md": {
+      "types": "./src/config-md.d.mts",
+      "default": "./src/config-md.mjs"
+    },
+    "./entries": {
+      "types": "./src/entries.d.mts",
+      "default": "./src/entries.mjs"
+    },
+    "./exporter": {
+      "types": "./src/exporter.d.mts",
+      "default": "./src/exporter.mjs"
+    },
     "./importer": "./src/importer.mjs",
     "./migrate": "./src/migrate.mjs"
   },
-  "files": ["src/*.mjs", "src/*.d.mts", "!src/*.test.mjs", "SPEC.md"],
+  "files": [
+    "src/*.mjs",
+    "src/*.d.mts",
+    "!src/*.test.mjs",
+    "SPEC.md"
+  ],
   "scripts": {
     "test": "node --test \"src/*.test.mjs\""
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "license": "MIT"
 }
