@@ -1,0 +1,12 @@
+{
+  "about": "Files in src/ that intentionally differ from the CHANGELOG app's lib/schema, and why. check-app-sync.mjs fails on any difference NOT listed here, and on any listed file that has become identical (then remove its entry). Delete an entry once the app carries the same change.",
+  "files": {
+    "exporter.mjs": "2026-11-05: memberYaml quotes a vocabulary label YAML would misread (labelYaml). The app's copy still writes labels bare."
+  },
+  "packageOnly": {
+    "index.mjs": "the package's single entry point",
+    "config-md.mjs": "the config reader, moved from the Obsidian plugin 2026-11-05; the app has no reader",
+    "config-md.d.mts": "its type declarations",
+    "config-md.test.mjs": "its tests"
+  }
+}

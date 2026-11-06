@@ -37,10 +37,11 @@
     "SPEC.md"
   ],
   "scripts": {
-    "test": "node --test \"src/*.test.mjs\""
+    "test": "node --test \"src/*.test.mjs\"",
+    "check:app": "node scripts/check-app-sync.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "license": "MIT"
 }
