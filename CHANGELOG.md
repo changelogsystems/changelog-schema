@@ -9,6 +9,9 @@ Notable changes to this library and to SPEC.md. Newest first.
 - `config-md.mjs`: `parseConfigMarkdown`, `extractFrontmatter` and `resolveConfig`, which read a config back out of markdown. The library could write a config and not read one. Moved here from the Obsidian plugin.
 - `scripts/check-app-sync.mjs`: checks that this library and the CHANGELOG app's copy are the same, apart from listed differences.
 
+### Changed
+- `SPEC.md` states the slug rule (§6.2a), defines an everyday label and the whole config grammar (§9.2), and notes that the de-duplication fingerprint is a small non-cryptographic hash (§12.3).
+
 ### Fixed
 - A vocabulary label that YAML would misread (`Foo, closes: true`, `#1 Priority`, quotes, a bare `true`) is now written as a quoted string in the config's markdown, and read back exactly. Everyday labels are written as before.
 

@@ -91,6 +91,8 @@ A workspace's vocabulary is its **config**: statuses, types and areas, each a li
 
 **6.2 · Resolution.** A raw token resolves to a member if it equals the member's `id` **or** the slug of its `label`, after stripping one leading `#` (`resolveVocabId`, `config.mjs:198-203`; `statusSlug`, `:97-99`; `slugId`, `:7-14`). A token that doesn't resolve is **never** turned into a new member: it passes through verbatim for display (`labelFor`, `:213-218`) and is quarantined on import (§8.3).
 
+**6.2a · The slug.** The slug of a string is made in this order (`slugId`, `config.mjs:7-14`): trim it; lower-case it; replace each run of whitespace with `-`; delete every character that isn't `a`–`z`, `0`–`9` or `-`; collapse runs of `-` into one; strip a leading or trailing `-`. So `On Hold`, ` on  hold ` and `#On Hold` (after the `#` is stripped) all slug to `on-hold`, while `on_hold` slugs to `onhold` and doesn't match it. A string with no ASCII letters or digits slugs to `''`.
+
 **6.3 · Statuses.** A bare list. Each has `closes` (§4.4). The shipped defaults are (`config.mjs:48-54`):
 
 | id | label | closes |
@@ -167,7 +169,8 @@ types:
 ```
 
 - Colours are always double-quoted (`:98`).
-- A label is written bare when it's an everyday label, and as a YAML double-quoted string otherwise, with `\`, `"`, newline and tab escaped (`labelYaml`, `:81-92`). This was fixed in this library on 2026-11-05; see §13.4.
+- A label is written bare when it's an **everyday label**, and as a YAML double-quoted string otherwise, with `\`, `"`, newline and tab escaped (`labelYaml`, `:81-92`). An everyday label starts with an ASCII letter or digit; contains only ASCII letters, digits, spaces and `. _ ( ) / & ' -`; doesn't end in a space, `(`, `/`, `&` or `-`; and isn't one of the YAML keywords `true`, `false`, `yes`, `no`, `on`, `off`, `null` or `~` in any case (`:86-87`). This was fixed in this library on 2026-11-05; see §13.4.
+- That is the whole grammar: top-level `key: value` lines; `statuses` as a list of one-line `{ … }` flow maps; `areas` and `types` as two-space-indented `mode:` and `set:`, with `set` either `[]` or a list of flow maps one indent deeper. Nothing else is written, and a reader need accept nothing else.
 
 **9.3 · Reading.** `parseConfigMarkdown` reads exactly that grammar (`src/config-md.mjs:88`):
 - a quoted value is read to its closing quote and is never coerced (`readQuoted`, `:30-47`; `:49-71`);
@@ -209,6 +212,8 @@ It's idempotent.
 **12.1 · The table can't carry an edit.** Because the table has no id (§7.4), completing a loop in one tool and importing the closing row elsewhere produces two independent entries, the open one and the closed one, not a chain (`importer.mjs:101-103`). A reader of that import will still show the loop open. An optional eighth `id` column has been proposed as the v1.1 fix. **It isn't part of v1**, and v1 readers MUST keep matching columns by name (§8.1), so an extra column is harmless.
 
 **12.2** The importer reads Markdown only (§10.4).
+
+**12.3 · The de-duplication fingerprint is small.** `contentHash` is a 32-bit, non-cryptographic hash (`src/entries.mjs:224-232`). Two different rows that happen to share a fingerprint would make the importer skip the second as a duplicate (§8.4). That's rare in practice, but it isn't impossible.
 
 ## 13 · Where the code and older notes disagree
 
