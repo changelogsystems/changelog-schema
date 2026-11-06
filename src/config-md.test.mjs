@@ -85,3 +85,43 @@ test('resolveConfig normalizes through the SDK — a partial config gets complet
   assert.equal(r.config.completeTarget, 'shut');
   assert.equal(r.config.areasSeeded, true);
 });
+
+// ── Labels YAML would misread (exporter.memberYaml used to write labels unquoted) ──
+// A label is user text. Unquoted, `Foo, closes: true` reads back as a truncated label
+// plus a forged `closes`, and `#1 Priority` is a YAML comment to any real YAML parser.
+const NASTY = ['Foo, closes: true', '#1 Priority', 'Say "hi"', 'A: B', 'C:\\temp', 'x, color: "#000000"', 'true', ' padded ', '配管', '[draft]'];
+
+test('labels with YAML-significant characters round-trip exactly, on every vocabulary', () => {
+  const set = NASTY.map((label, i) => ({ id: `t${i}`, label, color: '#58a6ff' }));
+  const statuses = NASTY.map((label, i) => ({ id: `s${i}`, label, color: '#58a6ff', closes: i === 0 }));
+  const src = { ...defaultConfig(), statuses, types: { mode: 'managed', set }, areas: { mode: 'managed', set } };
+  const parsed = parseConfigMarkdown(toConfigMarkdown(src));
+  assert.deepEqual(parsed.types.set, set);
+  assert.deepEqual(parsed.areas.set, set);
+  assert.deepEqual(parsed.statuses, statuses);
+});
+
+test('a label that needs it is written as a YAML double-quoted scalar', () => {
+  const md = toConfigMarkdown({ ...defaultConfig(), types: { mode: 'managed', set: [
+    { id: 'p1', label: '#1 Priority', color: '#58a6ff' },
+    { id: 'q', label: 'Say "hi"', color: '#58a6ff' },
+    { id: 'c', label: 'Foo, closes: true', color: '#58a6ff' },
+  ] } });
+  assert.ok(md.includes('label: "#1 Priority"'), md);
+  assert.ok(md.includes('label: "Say \\"hi\\""'), md);
+  assert.ok(md.includes('label: "Foo, closes: true"'), md);
+});
+
+test('an everyday label is written exactly as before, unquoted, so existing files keep their bytes', () => {
+  const md = toConfigMarkdown(defaultConfig());
+  assert.ok(md.includes('{ id: completed, label: Completed, color: "#3fb950", closes: true }'), md);
+  assert.ok(md.includes('{ id: field-dim, label: Field-Dim, color: "#39c5cf" }'), md);
+  assert.ok(md.includes('{ id: on-hold, label: On Hold, color: "#d29922", closes: false }'), md);
+});
+
+test('a file written before the fix (an unquoted label with a comma) still reads the way it did', () => {
+  const old = '---\nschema: changelog/v1\nstatuses:\n  - { id: open, label: Open, color: "#58a6ff", closes: false }\n'
+    + 'types:\n  mode: managed\n  set:\n    - { id: rfi, label: RFI, formal, color: "#d29922" }\n---\n';
+  const parsed = parseConfigMarkdown(old);
+  assert.deepEqual(parsed.types.set, [{ id: 'rfi', label: 'RFI, formal', color: '#d29922' }]);
+});

@@ -18,17 +18,54 @@ export function extractFrontmatter(md) {
   return m ? m[1] : null;
 }
 
-// Split an inline `{ id: x, label: y, color: "#z", closes: false }` map. Keyed scan
-// rather than a split on ',' so a label containing a comma survives.
+// Split an inline `{ id: x, label: y, color: "#z", closes: false }` map.
+// A quoted value (exporter.labelYaml quotes a label that needs it) is read to its
+// closing quote, escapes and all, so `, closes:` inside a label is label text. A bare
+// value runs to the next `, key:`: a keyed scan rather than a split on ',' so a label
+// written bare before labels were quoted, comma and all, still reads as it always did.
+const KEY_AT = /\s*([A-Za-z_][\w-]*)\s*:\s*/y;
+const NEXT_KEY = /,\s*[A-Za-z_][\w-]*\s*:/g;
+const ESCAPES = { n: '\n', t: '\t', '"': '"', '\\': '\\' };
+
+function readQuoted(body, start) {
+  const q = body[start];
+  let out = '';
+  let i = start + 1;
+  while (i < body.length) {
+    const ch = body[i];
+    if (q === '"' && ch === '\\' && i + 1 < body.length) {
+      out += ESCAPES[body[i + 1]] ?? body[i + 1];
+      i += 2;
+      continue;
+    }
+    if (q === "'" && ch === "'" && body[i + 1] === "'") { out += "'"; i += 2; continue; }
+    if (ch === q) return { value: out, end: i + 1 };
+    out += ch;
+    i += 1;
+  }
+  return { value: out, end: body.length };
+}
+
 function parseInlineMap(body) {
   const out = {};
-  const keyRe = /(?:^|,)\s*([A-Za-z_][\w-]*)\s*:\s*/g;
-  const hits = [];
-  let m;
-  while ((m = keyRe.exec(body)) !== null) hits.push({ key: m[1], from: m.index + m[0].length });
-  for (let i = 0; i < hits.length; i++) {
-    const end = i + 1 < hits.length ? body.lastIndexOf(',', hits[i + 1].from) : body.length;
-    out[hits[i].key] = coerce(body.slice(hits[i].from, end === -1 ? body.length : end).trim());
+  let i = 0;
+  while (i < body.length) {
+    KEY_AT.lastIndex = i;
+    const key = KEY_AT.exec(body);
+    if (!key) break;
+    i = KEY_AT.lastIndex;
+    if (body[i] === '"' || body[i] === "'") {
+      const { value, end } = readQuoted(body, i);
+      out[key[1]] = value;   // a quoted scalar is a string, never coerced
+      const comma = body.indexOf(',', end);
+      i = comma === -1 ? body.length : comma + 1;
+      continue;
+    }
+    NEXT_KEY.lastIndex = i;
+    const next = NEXT_KEY.exec(body);
+    const end = next ? next.index : body.length;
+    out[key[1]] = coerce(body.slice(i, end));
+    i = next ? next.index + 1 : body.length;
   }
   return out;
 }

@@ -78,10 +78,24 @@ export function toEntriesCsv(entries, config) {
   return [CSV_HEADER.join(','), ...rows].map((line) => `${line}\r\n`).join('');
 }
 
+// A label is user text, so it may hold anything YAML reads as syntax: `, key:` inside
+// an inline map, a leading `#` (a comment), quotes, brackets, a bare `true`. Such a
+// label is written as a YAML double-quoted scalar; an everyday label (letters, digits,
+// spaces and `-._()/&'`, not a YAML keyword) is written bare, exactly as before, so
+// existing files keep their bytes. config-md.mjs reads both.
+const PLAIN_LABEL = /^[A-Za-z0-9](?:[A-Za-z0-9 ._()/&'-]*[A-Za-z0-9._)'])?$/;
+const YAML_KEYWORD = /^(?:true|false|yes|no|on|off|null|~)$/i;
+function labelYaml(label) {
+  const text = String(label ?? '');
+  if (PLAIN_LABEL.test(text) && !YAML_KEYWORD.test(text)) return text;
+  return `"${text.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\t/g, '\\t')}"`;
+}
+
 // One managed vocabulary member as an inline YAML map. Colors are quoted (a leading '#'
-// starts a YAML comment otherwise). Statuses carry `closes`; types/areas do not.
+// starts a YAML comment otherwise); labels are quoted when they need it (labelYaml).
+// Statuses carry `closes`; types/areas do not.
 function memberYaml(v, withCloses) {
-  const parts = [`id: ${v.id}`, `label: ${v.label}`, `color: "${v.color}"`];
+  const parts = [`id: ${v.id}`, `label: ${labelYaml(v.label)}`, `color: "${v.color}"`];
   if (withCloses) parts.push(`closes: ${!!v.closes}`);
   return `  - { ${parts.join(', ')} }`;
 }
