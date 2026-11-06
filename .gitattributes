@@ -1,0 +1,2 @@
+# Normalize line endings so diffs stay readable across Windows and macOS checkouts.
+* text=auto eol=lf
